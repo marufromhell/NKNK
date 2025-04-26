@@ -1,6 +1,0 @@
-shutil
-re
-importlib
-timeit
-readline
-socket
