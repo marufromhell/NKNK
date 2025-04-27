@@ -19,7 +19,7 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 """
 
 SUPRESSLOGS = False
-homedir = "~"
+homedir = "/home/maru"
 HOMEDIR = '~'
 SystemShell = "/usr/bin/xonsh"
 nkdir = f"~/prog/nknk/"
@@ -75,13 +75,14 @@ def cmdline():
         try:
             current_working_directory = os.getcwd()
             user_input = input(f"{Prompt}{current_working_directory} ({elapsed_time})\n:")
-            isshell = user_input.startswith('!')
-            issudo = user_input.startswith('#')
-            isrun = user_input.startswith('@')
-            isback = user_input.startswith('..')
-            isdir = os.path.isdir(user_input)
+            command0 = user_input.replace('~', homedir)
+            isshell = command0.startswith('!')
+            issudo = command0.startswith('#')
+            isrun = command0.startswith('@')
+            isback = command0.startswith('..')
+            isdir = os.path.isdir(command0)
             if isshell:
-                command = user_input.replace('!', '')
+                command = command0.replace('!', '')
                 try:
                     # Evaluate the command as an f-string
                     command = eval(f"f'{command}'", globals(), locals())
@@ -90,21 +91,21 @@ def cmdline():
                     continue
                 scmd(command)
             elif issudo:
-                command = user_input.replace('#', 'sudo ')
+                command = command0.replace('#', 'sudo ')
                 scmd(command)
             elif isrun:
-                command = user_input.replace('@', 'sudo ./')
+                command = command0.replace('@', 'sudo ./')
                 scmd(command)
             elif isdir:
-                cd(user_input)
+                cd(command0)
             elif isback:
                 cd('..')
-            elif user_input == "q":
+            elif command0 == "q":
                 return 0
             else:
                 try:
                     start_time = timeit.default_timer()
-                    withhome = user_input.replace('~', homedir)
+                    withhome = command0.replace('~', homedir)
                     globals().update(globals())
                     exec(withhome, globals())
                     end_time = timeit.default_timer()
