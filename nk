@@ -1,2 +1,2 @@
 #!/bin/bash
-~/prog/nknk/nk.py
+~/venv/bin/nk-python ~/prog/nknk/nk.py
