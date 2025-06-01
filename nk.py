@@ -1,4 +1,3 @@
-#!/home/maru/venv/bin/python
 from importlib import reload
 import sys
 import os
