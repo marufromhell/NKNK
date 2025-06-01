@@ -5,7 +5,7 @@ import stat
 import files
 """
 Complib
-This module provides a command line completion library for Python.
+This module provides a very basic command line completion library for Python.
 GPLv3
 email: maru@lithium-dev.xyz (pgp attached)
 signal: maru.222

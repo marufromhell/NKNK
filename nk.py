@@ -8,7 +8,7 @@ shell="xonsh"
 def importnknk():
     global nknk
     import nknk
-    if not nknk.SUPRESSLOGS:
+    if not nknk.SUPRESSLOGS: #WHY CANT IT FUCKING FIND THE MODULE, IT WORKS SO WHY IS PYLANCE YELLING AT ME
         print("NK: Using nknk 2.1")
         nknk.NKlog()
 def run():
@@ -31,10 +31,10 @@ else:
 Using the Bourn Shell(sh)...
                   """)
             try:
-                os.system("sh")
+                os.system("/bin/sh")
             except Exception as e:
                 print("Did you rm rf / or something??? Bourn shell could not run.\nyour computer is kinda fucked, if you have no other shell installed then your computer is unrepairable\nerror: ",e)
-    print("exiting...")
+    print("exiting...") # explanation, when working on nkos it would destroy itself alot, and break the path
     while True:
         inp = input("Restart NKNK? y/lf: ")
         if inp == "y":
