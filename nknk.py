@@ -1,13 +1,3 @@
-# nk's not ksl
-import sys
-import os
-import builtins
-import timeit
-import files
-import readline #The readline module needs to be imported even if not used
-import socket
-from cmds import *
-from completelib import *
 """
 The NKNK Command line.
 GPLv3
@@ -18,13 +8,37 @@ ETH: 0x48994D78B7090367Aa20FD5470baDceec42cAF62
 XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDKqKNtbtJnU71gi6GrF4Wh
 """
 
+
+
+# nk's not ksl
+import sys
+import os
+import builtins
+import timeit
+import files
+import readline
+import socket
+from cmds import *
+from completelib import *
+
 SUPRESSLOGS = False
-homedir = "/home/maru"
 HOMEDIR = '~'
-SystemShell = "/usr/bin/xonsh"
-nkdir = f"~/prog/nknk/"
-DefaultDir = nkdir #alias
-Source = f"{DefaultDir}/nknk.py"
+homedir = "/home/maru"
+SystemShell = "/usr/bin/zsh"
+nkdir = "~/prog/nknk/"
+DefaultDir = nkdir
+Source = f"{DefaultDir}nknk.py"
+
+PROMPT_BASE = f"{os.getlogin()}@{socket.getfqdn()}"
+###
+### TEMPORARY FIX
+def supress_logs():
+    if SUPRESSLOGS:
+        return True
+
+    
+
+
 def NKlog():
     if not SUPRESSLOGS:
         print("NKNK: Log: Shell:", SystemShell)
@@ -66,52 +80,48 @@ def nknkdef(code):
 
 def cmdline():
     elapsed_time = 0
-    user = os.getlogin()
-    PCname = socket.getfqdn()
-    AtNameDir = f"@{PCname}:"
-    Prompt = f"{user}{AtNameDir}"
     compile()
+    
+    # Pre-compile frequently used strings
+    home_replace = homedir
+    sudo_prefix = 'sudo '
+    sudo_dot_prefix = 'sudo ./'
+    
     while True:
         try:
             current_working_directory = os.getcwd()
-            user_input = input(f"{Prompt}{current_working_directory} ({elapsed_time})\n:")
-            command0 = user_input.replace('~', homedir)
-            isshell = command0.startswith('!')
-            issudo = command0.startswith('#')
-            isrun = command0.startswith('@')
-            isback = command0.startswith('..')
-            isdir = os.path.isdir(command0)
-            if isshell:
-                command = command0.replace('!', '')
+            prompt = f"{PROMPT_BASE}{current_working_directory} ({elapsed_time})\n:"
+            user_input = input(prompt)
+
+            command0 = user_input.replace('~', home_replace)
+            #strips instead of replace
+            if command0.startswith('!'):
+                command = command0[1:]
                 try:
-                    # Evaluate the command as an f-string
                     command = eval(f"f'{command}'", globals(), locals())
                 except Exception as e:
                     print("\aNKNK: Error: Invalid f-string:", e)
                     continue
                 scmd(command)
-            elif issudo:
-                command = command0.replace('#', 'sudo ')
-                scmd(command)
-            elif isrun:
-                command = command0.replace('@', 'sudo ./')
-                scmd(command)
-            elif isdir:
+            elif command0.startswith('#'):
+                scmd(sudo_prefix + command0[1:])
+            elif command0.startswith('@'):
+                scmd(sudo_dot_prefix + command0[1:])
+            elif os.path.isdir(command0):
                 cd(command0)
-            elif isback:
+            elif command0.startswith('..'):
                 cd('..')
             elif command0 == "q":
                 return 0
             else:
                 try:
                     start_time = timeit.default_timer()
-                    withhome = command0.replace('~', homedir)
                     globals().update(globals())
-                    exec(withhome, globals())
-                    end_time = timeit.default_timer()
-                    elapsed_time = round(end_time - start_time, 2)
+                    exec(command0, globals())
+                    elapsed_time = round(timeit.default_timer() - start_time, 2)
                 except Exception as e:
                     print("NKNK: Error: Exception:", e)
+                    
         except KeyboardInterrupt:
             print("\nNKNK: Log: KeyboardInterrupt")
         except EOFError:
