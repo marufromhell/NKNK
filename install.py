@@ -222,12 +222,12 @@ if a == "y":
         a=getch()
         if a == "1":
             print("Installing nknk via SSH...")
-            if os.system("git clone git@github.com:marufromhell/NKNK.git -b main") != 0:
+            if os.system("git clone git@github.com:marufromhell/NKNK.git -b main nknk") != 0:
                 print("Error: Git clone failed")
                 exit(1)
         elif a == "2":
             print("Installing nknk via HTTPS...")
-            if os.system("git clone https://github.com/marufromhell/NKNK.git -b main") != 0:
+            if os.system("git clone https://github.com/marufromhell/NKNK.git -b main nknk") != 0:
                 print("Error: Git clone failed")
                 exit(1)
         else:
@@ -238,6 +238,7 @@ if a == "y":
         print("making venv")
         os.system('python3 -m venv ~/venv/')
         print('renaming python executable(for fastfetch)')
+        os.system(f"mv ~/venv/bin/python ~/venv/bin/nk-python")
         print("Would you like to add nknk to ZSH path? (beta feature) (y/N)".center(width))
         a=getch()
         if a == "y":
