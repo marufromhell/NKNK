@@ -11,32 +11,99 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 # todo:
 # git integration
 # fix how it handles commands such as "git push origin main", when using ssh. it freezes after password is entered
+# make conf file
+# make it less reliant on user configuration
+
 
 # nk's not ksl
 import builtins
 import timeit
 import files
 import socket
+import yaml
 from cmds import *
 from completelib import *
 
-SUPRESSLOGS = False
-HOMEDIR = '~'
-homedir = "/home/maru"
-SystemShell = "/usr/bin/zsh"
-nkdir = "~/prog/nknk/"
+def load_config():
+    config_path = os.path.expanduser("~/.config/nknk/nknk.yaml")
+    try:
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        return config
+    except FileNotFoundError:
+        print("NKNK: Warning: Config file not found Exiting...")
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"NKNK: Error: Failed to parse config file: {e}")
+        sys.exit(1)
+
+# Load configuration
+config = load_config()
+
+# Set global variables from config
+SUPRESSLOGS = config["system"]["SUPPRESSLOGS"]
+HOMEDIR = config["system"]["HOMEDIR"]
+SystemShell = config["system"]["SystemShell"]
+nkdir = config["system"]["nkdir"]
+DefaultEditor = config["system"]["DefaultEditor"]
+
 DefaultDir = nkdir
 Source = f"{DefaultDir}nknk.py"
 
-PROMPT_BASE = f"{os.getlogin()}@{socket.getfqdn()}"
-###
-### TEMPORARY FIX
-def supress_logs():
-    if SUPRESSLOGS:
-        return True
+ENABLE_GIT = config["prompt"]["git"]
+ENABLE_TIMER = config["prompt"]["timer"]
+ENABLE_FQDN = config["prompt"]["fqdn"]
+ENABLE_USER = config["prompt"]["user"]
+ENABLE_2LINE = config["prompt"]["2line"]
+ENABLE_COLON = config["prompt"]["colon"]
+if ENABLE_2LINE:
+    line = "\n"
+else:
+    line = ""
+if ENABLE_COLON:
+    colon = ":"
+else:
+    colon = ""
+# Generate prompt base if not specified in config
+if ENABLE_USER and ENABLE_FQDN:
+    PROMPT_BASE = f"{os.getlogin()}@{socket.getfqdn()}"
+elif ENABLE_USER:
+    PROMPT_BASE = os.getlogin()
+elif ENABLE_FQDN:
+    PROMPT_BASE = socket.getfqdn()
+else:
+    PROMPT_BASE = ""
 
-    
 
+def get_git_branch():
+    """Get the current Git branch name."""
+    try:
+        branch = subprocess.check_output(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            stderr=subprocess.DEVNULL
+        ).decode('utf-8').strip()
+        return branch
+    except subprocess.CalledProcessError:
+        return ""  # Not a Git repository
+
+def git_status():
+    try:
+        status = subprocess.check_output(
+            ['git', 'status', '--porcelain'],
+            stderr=subprocess.DEVNULL
+        ).decode().splitlines()
+        
+        # Count unstaged (modified) and untracked files
+        unstaged = len([f for f in status if f.startswith(' M') or f.startswith('M ')])
+        untracked = len([f for f in status if f.startswith('??')])
+        prompt=""
+        if unstaged > 0:
+            prompt += f"!{unstaged} "
+        if untracked > 0:
+            prompt += f"?{untracked}" 
+    except subprocess.CalledProcessError:
+        prompt = ""
+    return prompt 
 
 def NKlog():
     if not SUPRESSLOGS:
@@ -82,14 +149,14 @@ def cmdline():
     compile()
     
     # Pre-compile frequently used strings
-    home_replace = homedir
+    home_replace = HOMEDIR
     sudo_prefix = 'sudo '
     sudo_dot_prefix = 'sudo ./'
     
     while True:
         try:
             current_working_directory = os.getcwd()
-            prompt = f"{PROMPT_BASE}{current_working_directory} ({elapsed_time})\n:"
+            prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}:"
             user_input = input(prompt)
 
             command0 = user_input.replace('~', home_replace)
@@ -114,10 +181,12 @@ def cmdline():
                 return 0
             else:
                 try:
-                    start_time = timeit.default_timer()
+                    if ENABLE_TIMER:
+                        start_time = timeit.default_timer()
                     globals().update(globals())
                     exec(command0, globals())
-                    elapsed_time = round(timeit.default_timer() - start_time, 2)
+                    if ENABLE_TIMER:
+                        elapsed_time = round(timeit.default_timer() - start_time, 2)
                 except Exception as e:
                     print("NKNK: Error: Exception:", e)
                     
@@ -146,4 +215,7 @@ def vihp():
     scmd(f"vim ~/.config/hypr/hyprpaper.conf")
 def vinknk():
     scmd(f"vim {Source}")
-
+def vink():
+    scmd(f"vim {nkdir}nk.py")
+def viconf():
+    scmd(f"vim ~/.config/nknk/nknk.yaml")

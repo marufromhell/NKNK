@@ -7,9 +7,9 @@ shell="xonsh"
 def importnknk():
     global nknk
     import nknk
-    if not nknk.SUPRESSLOGS: #WHY CANT IT FUCKING FIND THE MODULE, IT WORKS SO WHY IS PYLANCE YELLING AT ME
+    if not nknk.SUPRESSLOGS: # type: ignore #WHY CANT IT FUCKING FIND THE MODULE, IT WORKS SO WHY IS PYLANCE YELLING AT ME
         print("NK: Using nknk 2.1")
-        nknk.NKlog()
+        nknk.NKlog() #type: ignore
 def run():
     nknk.cmdline() # type: ignore
 arguments = sys.argv[1:]
