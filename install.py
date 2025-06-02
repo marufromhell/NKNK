@@ -130,6 +130,8 @@ else:
     a=input()
     nkpath = a
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), f"   nkdir: \"{a}\"\n")
+    if not os.path.exists(nkpath):
+        os.makedirs(nkpath)
     print(f"Added setting: nkdir: {a} to config")
 
 print("What editor do you want to use? (1)Nano, (2)Vim, (3)Nvim, (4)Gedit, (5)Emacs, (6)Enter your own".center(width))
@@ -154,7 +156,7 @@ else:
     editor = "vim"
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   editor: \"vim\"\n")
     print("Invalid input. Added setting: editor: vim to config (default)")
-#os.system("clear")
+os.system("clear")
 
 
 
@@ -170,7 +172,12 @@ else:
 
 
 
-
+print("Enable current directory in prompt? Recomended (y/n)".center(width))
+a=getch()
+if a == "y":
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   cwd: true\n")
+else:
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   cwd: false\n")
 
 print("Enable git integration? (y/n)".center(width))
 a=getch()
@@ -179,13 +186,6 @@ if a == "y":
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   git: false\n")
 #os.system("clear")
-print("Enable zoxide integration? (y/n)".center(width))
-a=getch()
-if a == "y":
-    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: true\n")
-else:
-    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: false\n")
-
 
 print("Enable pc name in prompt? (y/n)".center(width))
 a=getch()
@@ -223,6 +223,8 @@ if a == "y":
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   shorthome: false\n")
 files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "other:\n")
+os.system("clear")
+print("Time for integration and other settings".center(width))
 print("Enable zoxide? (y/n)".center(width))
 a=getch()
 if a == "y":
