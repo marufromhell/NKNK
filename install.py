@@ -260,7 +260,7 @@ if a == "y":
         print("do you want to remove install, .git, readme, LICENSE, and requirements? (y/n)".center(width))
         a=getch()
         if a == "y":
-            os.system(f"rm -rf {nkpath}/.git") # i know that theres already a slash but if the user didnt add a slash it would fail
+            os.system(f"rm -rf {nkpath}/.git") 
             os.system(f"rm {nkpath}/README.md")
             os.system(f"rm {nkpath}/requirements.txt")
             os.system(f"rm {nkpath}/LICENSE")
@@ -277,7 +277,7 @@ if a == "y":
         a=getch()
         if a == "y":
             print("Starting nk...")
-            os.system(f"{nkpath}nk")
+            os.system(f"{nkpath}/nk")
         else:
             print("You can start nk later by running the nk command in your terminal")
             print("All Done!".center(width))
