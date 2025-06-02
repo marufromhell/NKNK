@@ -9,10 +9,8 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 """
 
 # todo:
-# git integration
-# fix how it handles commands such as "git push origin main", when using ssh. it freezes after password is entered
-# make conf file
-# make it less reliant on user configuration
+# xonsh like python vs sh assumptions
+# contains space, andor no parenthesis =shell command
 
 
 # nk's not ksl
@@ -23,6 +21,16 @@ import socket
 import yaml
 from cmds import *
 from completelib import *
+import subprocess
+
+# Add zoxide initialization
+def init_zoxide():
+    try:
+        subprocess.run(['zoxide', 'init', '--hook', 'pwd'], capture_output=True, text=True)
+        return True
+    except FileNotFoundError:
+        print("NKNK: Warning: zoxide not found. Please install zoxide first.")
+        return False
 
 def load_config():
     config_path = os.path.expanduser("~/.config/nknk/nknk.yaml")
@@ -56,6 +64,7 @@ ENABLE_FQDN = config["prompt"]["fqdn"]
 ENABLE_USER = config["prompt"]["user"]
 ENABLE_2LINE = config["prompt"]["2line"]
 ENABLE_COLON = config["prompt"]["colon"]
+ENABLE_ZOXIDE = config["prompt"]["zoxide"]
 if ENABLE_2LINE:
     line = "\n"
 else:
@@ -73,8 +82,11 @@ elif ENABLE_FQDN:
     PROMPT_BASE = socket.getfqdn()
 else:
     PROMPT_BASE = ""
-
-
+def scmd(cmd):
+    try:
+        subprocess.run(cmd, shell=True, executable=SystemShell) # type: ignore
+    except Exception as e:
+        print("Shell:", e)
 def get_git_branch():
     """Get the current Git branch name."""
     try:
@@ -92,8 +104,7 @@ def git_status():
             ['git', 'status', '--porcelain'],
             stderr=subprocess.DEVNULL
         ).decode().splitlines()
-        
-        # Count unstaged (modified) and untracked files
+              # Count unstaged (modified) and untracked files
         unstaged = len([f for f in status if f.startswith(' M') or f.startswith('M ')])
         untracked = len([f for f in status if f.startswith('??')])
         prompt=""
@@ -125,7 +136,7 @@ def make_the_sharks_swim():
     elif not SUPRESSLOGS:
         print("NKNK: Log: Importing script is handling init")
 
-#fun
+
 def incstack(number):
     sys.setrecursionlimit(number)
     print(sys.getrecursionlimit())
@@ -147,12 +158,12 @@ def nknkdef(code):
 def cmdline():
     elapsed_time = 0
     compile()
-    
-    # Pre-compile frequently used strings
+      # Pre-compile frequently used strings
     home_replace = HOMEDIR
     sudo_prefix = 'sudo '
     sudo_dot_prefix = 'sudo ./'
-    
+      # Initialize zoxide if enabled
+    zoxide_available = init_zoxide() if ENABLE_ZOXIDE else False
     while True:
         try:
             current_working_directory = os.getcwd()
@@ -160,7 +171,21 @@ def cmdline():
             user_input = input(prompt)
 
             command0 = user_input.replace('~', home_replace)
-            #strips instead of replace
+                      # Add zoxide command handling
+            if command0.startswith('z ') and ENABLE_ZOXIDE and zoxide_available:
+                query = command0[2:].strip()
+                try:
+                    result = subprocess.run(['zoxide', 'query', query], capture_output=True,text=True)
+                    if result.returncode == 0:
+                        target_dir = result.stdout.strip()
+                        cd(target_dir)
+                        # add to zoxide db
+                        scmd(f'zoxide add {target_dir}')
+                    else:
+                        print(f"NKNK: Error: Directory not found: {query}")
+                except Exception as e:
+                    print(f"NKNK: Error: Zoxide error: {e}")
+                continue
             if command0.startswith('!'):
                 command = command0[1:]
                 try:
@@ -189,11 +214,8 @@ def cmdline():
                         elapsed_time = round(timeit.default_timer() - start_time, 2)
                 except Exception as e:
                     print("NKNK: Error: Exception:", e)
-                    
-        except KeyboardInterrupt:
-            print("\nNKNK: Log: KeyboardInterrupt")
-        except EOFError:
-            print("\nNKNK: Log: EOFError")
+                except KeyboardInterrupt:
+                        print("\nNKNK: Log: KeyboardInterrupt")
         except Exception as e:
             print("\nNKNK: Log: Exception:", e)
 
@@ -204,18 +226,18 @@ make_the_sharks_swim()
 #start
 def viwb(x):
     if x== "j":
-        scmd("sudo vim /etc/xdg/waybar/config.jsonc")
+        scmd(f"sudo {DefaultEditor} /etc/xdg/waybar/config.jsonc")
     elif x=="c":
-        scmd("sudo vim /etc/xdg/waybar/style.css")
+        scmd(f"sudo {DefaultEditor} /etc/xdg/waybar/style.css")
     else:
         print("j/c")
 def vihl():
-    scmd(f"vim ~/.config/hypr/hyprland.conf")
+    scmd(f"{DefaultEditor} ~/.config/hypr/hyprland.conf")
 def vihp():
-    scmd(f"vim ~/.config/hypr/hyprpaper.conf")
+    scmd(f"{DefaultEditor} ~/.config/hypr/hyprpaper.conf")
 def vinknk():
-    scmd(f"vim {Source}")
+    scmd(f"{DefaultEditor} {Source}")
 def vink():
-    scmd(f"vim {nkdir}/nk.py")
+    scmd(f"{DefaultEditor} {nkdir}/nk.py")
 def viconf():
-    scmd(f"vim ~/.config/nknk/nknk.yaml")
+    scmd(f"{DefaultEditor} ~/.config/nknk/nknk.yaml")

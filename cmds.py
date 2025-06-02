@@ -14,11 +14,6 @@ ETH: 0x48994D78B7090367Aa20FD5470baDceec42cAF62
 XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDKqKNtbtJnU71gi6GrF4Wh
 """
 
-def scmd(cmd):
-    try:
-        subprocess.run(cmd, shell=True, executable="/usr/bin/zsh") # type: ignore
-    except Exception as e:
-        print("Shell:", e)
 
 def cd(path):
     os.chdir(path.replace(" ", ""))
@@ -62,14 +57,7 @@ def pyrun(file):
     
 def ls():
     print(os.listdir('.'))
-
-def curl(argument):
-    scmd(f"curl {argument}")
-
 def refresh():
     r = "refreshing"
     print(r)
     os.execv(sys.argv[0], sys.argv)
-
-def vim(a):
-    scmd(f"vim {a}")
