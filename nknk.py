@@ -48,7 +48,7 @@ nkdir = config["system"]["nkdir"]
 DefaultEditor = config["system"]["editor"]
 
 DefaultDir = nkdir
-Source = f"{DefaultDir}nknk.py"
+Source = f"{DefaultDir}/nknk.py"
 
 ENABLE_GIT = config["prompt"]["git"]
 ENABLE_TIMER = config["prompt"]["timer"]
@@ -216,6 +216,6 @@ def vihp():
 def vinknk():
     scmd(f"vim {Source}")
 def vink():
-    scmd(f"vim {nkdir}nk.py")
+    scmd(f"vim {nkdir}/nk.py")
 def viconf():
     scmd(f"vim ~/.config/nknk/nknk.yaml")
