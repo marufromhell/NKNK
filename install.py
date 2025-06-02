@@ -251,7 +251,12 @@ if a == "y":
         else:
             print("nknk not added to path, add it manually")
             path_added = False
+        print("Installing requirements")
+        os.system(f"~/venv/bin/pip install -r {nkpath}/requirements.txt")
+        print("making nk executable")
+        os.system('chmod +x {nkpath}/nk')
         print("Installation complete")
+
 
         if path_added:
             print("Do you want to start nk? (y/n)".center(width))
