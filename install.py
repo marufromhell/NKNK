@@ -245,9 +245,9 @@ if a == "y":
             path_added = True
             try:
                 add_to_zsh_path(nkpath)
-                print("nknk added to zsh path".center(width))
+                print("nknk added to zsh path")
             except Exception as e:
-                print(f"Error adding nknk to path: {e}".center(width))
+                print(f"Error adding nknk to path: {e}")
         else:
             print("nknk not added to path, add it manually")
             path_added = False
@@ -257,11 +257,32 @@ if a == "y":
         os.system(f'chmod +x {nkpath}/nk')
         print("Installation complete")
 
-
+        print("do you want to remove install, .git, readme, LICENSE, and requirements? (y/n)".center(width))
+        a=getch()
+        if a == "y":
+            os.system(f"rm -rf {nkpath}/.git") # i know that theres already a slash but if the user didnt add a slash it would fail
+            os.system(f"rm {nkpath}/README.md")
+            os.system(f"rm {nkpath}/requirements.txt")
+            os.system(f"rm {nkpath}/LICENSE")
+            os.system(f"rm {nkpath}/install.py")
+            print("Removed .git, README.md, and requirements.txt")
+        else:
+            print("Not removing .git, README.md, and requirements.txt")
+        print("assuming current directory is where the installer is")
+        print(f"Current directory: {os.getcwd()}")
+        #ensure that install.py is in the current directory
+        if os.path.exists("install.py"):
+            os.system("rm install.py")
         print("Do you want to start nk? (y/n)".center(width))
         a=getch()
         if a == "y":
+            print("Starting nk...")
             os.system(f"{nkpath}nk")
+        else:
+            print("You can start nk later by running the nk command in your terminal")
+            print("All Done!".center(width))
+            
+
 
     else:
         print("Installation cancelled".center(width))
