@@ -92,6 +92,7 @@ print("Checking if config directory exists")
 ensure_config_dir()
 files.touch(os.path.expanduser("~/.config/nknk/nknk.yaml"))
 print("config made, now writing to it")
+
 print("Suppress Logs? (y/n)".center(width))
 a=getch()
 files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "system:\n")
@@ -103,37 +104,32 @@ else:
     print("You selected N, Added setting: SUPPRESSLOGS: false to config")
 #os.system("clear")
 
-print("Full Home Directory?".center(width))
-a=input()
-if a == "":
-    a = os.path.expanduser('~')
+print("auto configuring home directory".center(width))
+a = os.path.expanduser('~')
 files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), f"   HOMEDIR: \"{a}\"\n")
+
 print(f"Added setting: HOMEDIR: {a} to config")
 #os.system("clear")
 
+shell_map = {
+    "1": "xonsh",
+    "2": "zsh",
+    "3": "bash",
+}
 print("System Shell?".center(width))
 a=input()
-if a == "":
-    a = "/usr/bin/bash"
+if a in shell_map:
+    a = shell_map[a]
+else:
+    print("Invalid input, defaulting to zsh")
+    a = "zsh"
+
 files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), f"   SystemShell: \"{a}\"\n")
 print(f"Added setting: SystemShell: {a} to config")
-#os.system("clear")
 
-print(f"Use default nknk directory ({os.path.expanduser('~/prog/nknk')})? (y/n)".center(width))
-a=getch()
-if a == "y":
-    nkpath = os.path.expanduser("~/prog/nknk")
-    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), f"   nkdir: \"{nkpath}\"\n")
-    print(f"You selected Y, Added setting: nkdir: {nkpath} to config")
-else:
-    print("Enter nknk directory:")
-    a=input()
-    nkpath = a
-    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), f"   nkdir: \"{a}\"\n")
-    if not os.path.exists(nkpath):
-        os.makedirs(nkpath)
-    print(f"Added setting: nkdir: {a} to config")
-
+nkpath = os.path.expanduser("~/prog/nknk")
+files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), f"   nkdir: \"{nkpath}\"\n")
+print(f"Added setting: nkdir: {nkpath} to config")
 print("What editor do you want to use? (1)Nano, (2)Vim, (3)Nvim, (4)Gedit, (5)Emacs, (6)Enter your own".center(width))
 a=getch()
 editor_map = {
@@ -237,12 +233,12 @@ if a == "y":
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   whiching: true\n")
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   whiching: false\n")
-#os.system("clear")
+os.system("clear")
 print("All done with nknk configuration")
 print("Do you want to install nknk now? (y/n)".center(width))
 a=getch()
 if a == "y":
-    #os.system("clear")
+    os.system("clear")
     print("Are you sure? (y/n)".center(width))
     a=getch()
     if a == "y":
