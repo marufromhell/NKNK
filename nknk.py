@@ -45,7 +45,7 @@ SUPRESSLOGS = config["system"]["SUPPRESSLOGS"]
 HOMEDIR = config["system"]["HOMEDIR"]
 SystemShell = config["system"]["SystemShell"]
 nkdir = config["system"]["nkdir"]
-DefaultEditor = config["system"]["DefaultEditor"]
+DefaultEditor = config["system"]["editor"]
 
 DefaultDir = nkdir
 Source = f"{DefaultDir}nknk.py"
