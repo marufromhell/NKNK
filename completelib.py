@@ -1,7 +1,6 @@
 import os
 import readline
 import re
-import stat
 import files
 """
 Complib
