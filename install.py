@@ -216,6 +216,25 @@ if a == "y":
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   2line: true\n")
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   2line: false\n")
+print("Enable shorthome? (y/n)".center(width))
+a=getch()
+if a == "y":
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   shorthome: true\n")
+else:
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   shorthome: false\n")
+files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "other:\n")
+print("Enable zoxide? (y/n)".center(width))
+a=getch()
+if a == "y":
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: true\n")
+else:
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: false\n")
+print("Enable whiching? (y/n)".center(width))
+a=getch()
+if a == "y":
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   whiching: true\n")
+else:
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   whiching: false\n")
 #os.system("clear")
 print("All done with nknk configuration")
 print("Do you want to install nknk now? (y/n)".center(width))

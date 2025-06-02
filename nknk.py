@@ -58,15 +58,18 @@ DefaultEditor = config["system"]["editor"]
 DefaultDir = nkdir
 Source = f"{DefaultDir}/nknk.py"
 
+ENABLE_CWD = config["prompt"]["cwd"]
 ENABLE_GIT = config["prompt"]["git"]
 ENABLE_TIMER = config["prompt"]["timer"]
 ENABLE_FQDN = config["prompt"]["fqdn"]
 ENABLE_USER = config["prompt"]["user"]
 ENABLE_2LINE = config["prompt"]["2line"]
 ENABLE_COLON = config["prompt"]["colon"]
+ENABLE_SHORTHOME = config["prompt"]["shorthome"] # /home/user to ~ on cwd
+
 
 ENABLE_ZOXIDE = config["other"]["zoxide"]
-ENABLE_INDEXING = config["other"]["indexing"] #dont use this if you use alot of python commands, it will slow down the shell
+ENABLE_WHICHING = config["other"]["whiching"] #you probably want this.
 if ENABLE_2LINE:
     line = "\n"
 else:
@@ -177,19 +180,23 @@ def cmdline():
     sudo_prefix = 'sudo '
     zoxide_available = init_zoxide() if ENABLE_ZOXIDE else False
     
-    # Cache the home dir check
-    has_home = home_replace != '~'
     
     while True:
         try:
-            current_working_directory = os.getcwd()
+            if ENABLE_CWD:
+                    
+                if ENABLE_SHORTHOME:
+                    current_working_directory = os.getcwd().replace(os.path.expanduser('~'), '~')
+                else:
+                    current_working_directory = os.getcwd()
+            else:
+                current_working_directory = ""
+
+
             prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}:"
             user_input = input(prompt)
-
             command0 = user_input
-            if has_home:
-                command0 = command0.replace('~', home_replace)
-                      # Add zoxide command handling
+            
 
 
 
@@ -215,16 +222,17 @@ def cmdline():
                 command_case(command) # run the command
                 
 
+            elif os.path.isdir(command0): # if a executable and directory have the same name, cd, because its harder to manually cd than run a command
+                cd(command0)
+
             elif len(command0.split()) > 1 and "(" not in command0: # if theres more than one word, assume its a shell command unless it has parenthesis
                 command_case(command0) # run the command
-            elif ENABLE_INDEXING and shutil.which(command0) is not None:
+            elif ENABLE_WHICHING and shutil.which(command0) is not None:
                 command_case(command0)
                     
             elif command0.startswith('#'):
                 scmd(sudo_prefix + command0[1:])
 
-            elif os.path.isdir(command0):
-                cd(command0)
 
             elif command0 == "q":
                 return 0
