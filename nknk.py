@@ -10,8 +10,7 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 
 # todo:
 # xonsh like python vs sh assumptions
-# contains space, andor no parenthesis =shell command
-
+# allow shell curly braces
 
 # nk's not ksl
 import builtins
@@ -22,6 +21,7 @@ import yaml
 from cmds import *
 from completelib import *
 import subprocess
+import re
 
 # Add zoxide initialization
 def init_zoxide():
@@ -64,7 +64,9 @@ ENABLE_FQDN = config["prompt"]["fqdn"]
 ENABLE_USER = config["prompt"]["user"]
 ENABLE_2LINE = config["prompt"]["2line"]
 ENABLE_COLON = config["prompt"]["colon"]
-ENABLE_ZOXIDE = config["prompt"]["zoxide"]
+
+ENABLE_ZOXIDE = config["other"]["zoxide"]
+ENABLE_INDEXING = config["other"]["indexing"] #dont use this if you use alot of python commands, it will slow down the shell
 if ENABLE_2LINE:
     line = "\n"
 else:
@@ -101,9 +103,7 @@ def get_git_branch():
 def git_status():
     try:
         status = subprocess.check_output(
-            ['git', 'status', '--porcelain'],
-            stderr=subprocess.DEVNULL
-        ).decode().splitlines()
+            ['git', 'status', '--porcelain'],stderr=subprocess.DEVNULL).decode().splitlines()
               # Count unstaged (modified) and untracked files
         unstaged = len([f for f in status if f.startswith(' M') or f.startswith('M ')])
         untracked = len([f for f in status if f.startswith('??')])
@@ -154,24 +154,45 @@ def pdv(): #print defined variables
 def nknkdef(code):
     files.amend(Source, f"\n{code}")
     refresh()
+def command_case(command):
+    try:
 
+        if ENABLE_TIMER:
+            start_time = timeit.default_timer()
+        # Only evaluate if contains format specifiers
+        if _f_string_pattern.search(command):
+            command = eval(f"f'{command}'", globals(), locals())
+        scmd(command)
+        if ENABLE_TIMER:
+            elapsed_time = round(timeit.default_timer() - start_time, 2)
+    except Exception as e:
+        print("\aNKNK: Error: Invalid command:", e)
+        return
+_f_string_pattern = re.compile(r'\{.*?\}')
 def cmdline():
     elapsed_time = 0
     compile()
-      # Pre-compile frequently used strings
+    # Pre-compile frequently used strings
     home_replace = HOMEDIR
     sudo_prefix = 'sudo '
-    sudo_dot_prefix = 'sudo ./'
-      # Initialize zoxide if enabled
     zoxide_available = init_zoxide() if ENABLE_ZOXIDE else False
+    
+    # Cache the home dir check
+    has_home = home_replace != '~'
+    
     while True:
         try:
             current_working_directory = os.getcwd()
             prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}:"
             user_input = input(prompt)
 
-            command0 = user_input.replace('~', home_replace)
+            command0 = user_input
+            if has_home:
+                command0 = command0.replace('~', home_replace)
                       # Add zoxide command handling
+
+
+
             if command0.startswith('z ') and ENABLE_ZOXIDE and zoxide_available:
                 query = command0[2:].strip()
                 try:
@@ -186,24 +207,28 @@ def cmdline():
                 except Exception as e:
                     print(f"NKNK: Error: Zoxide error: {e}")
                 continue
+
+
+
             if command0.startswith('!'):
                 command = command0[1:]
-                try:
-                    command = eval(f"f'{command}'", globals(), locals())
-                except Exception as e:
-                    print("\aNKNK: Error: Invalid f-string:", e)
-                    continue
-                scmd(command)
+                command_case(command) # run the command
+                
+
+            elif len(command0.split()) > 1 and "(" not in command0: # if theres more than one word, assume its a shell command unless it has parenthesis
+                command_case(command0) # run the command
+            elif ENABLE_INDEXING and shutil.which(command0) is not None:
+                command_case(command0)
+                    
             elif command0.startswith('#'):
                 scmd(sudo_prefix + command0[1:])
-            elif command0.startswith('@'):
-                scmd(sudo_dot_prefix + command0[1:])
+
             elif os.path.isdir(command0):
                 cd(command0)
-            elif command0.startswith('..'):
-                cd('..')
+
             elif command0 == "q":
                 return 0
+            
             else:
                 try:
                     if ENABLE_TIMER:
@@ -216,8 +241,14 @@ def cmdline():
                     print("NKNK: Error: Exception:", e)
                 except KeyboardInterrupt:
                         print("\nNKNK: Log: KeyboardInterrupt")
+        except EOFError:
+            print("\nNKNK: Log: EOFError, exiting...")
+            break
         except Exception as e:
             print("\nNKNK: Log: Exception:", e)
+        except KeyboardInterrupt:
+                print("\nNKNK: Log: KeyboardInterrupt")
+        
 
 #args
 make_the_sharks_swim()

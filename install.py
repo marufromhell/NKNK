@@ -179,6 +179,13 @@ if a == "y":
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   git: false\n")
 #os.system("clear")
+print("Enable zoxide integration? (y/n)".center(width))
+a=getch()
+if a == "y":
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: true\n")
+else:
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: false\n")
+
 
 print("Enable pc name in prompt? (y/n)".center(width))
 a=getch()

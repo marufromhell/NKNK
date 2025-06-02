@@ -2,7 +2,7 @@ from importlib import reload
 import sys
 import os
 import subprocess
-shell="xonsh"
+shell="zsh"
 
 def importnknk():
     global nknk
