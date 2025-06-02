@@ -254,7 +254,7 @@ if a == "y":
         print("Installing requirements")
         os.system(f"~/venv/bin/pip install -r {nkpath}/requirements.txt")
         print("making nk executable")
-        os.system('chmod +x {nkpath}/nk')
+        os.system(f'chmod +x {nkpath}/nk')
         print("Installation complete")
 
 
