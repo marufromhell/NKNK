@@ -258,11 +258,10 @@ if a == "y":
         print("Installation complete")
 
 
-        if path_added:
-            print("Do you want to start nk? (y/n)".center(width))
-            a=getch()
-            if a == "y":
-                os.system("nk")
+        print("Do you want to start nk? (y/n)".center(width))
+        a=getch()
+        if a == "y":
+            os.system(f"{nkpath}nk")
 
     else:
         print("Installation cancelled".center(width))
