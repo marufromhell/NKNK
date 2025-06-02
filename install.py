@@ -98,17 +98,14 @@ a=getch()
 files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "system:\n")
 if a == "y":
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   SUPPRESSLOGS: true\n")
-    print("You selected Y, Added setting: SUPPRESSLOGS: true to config")
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   SUPPRESSLOGS: false\n")
-    print("You selected N, Added setting: SUPPRESSLOGS: false to config")
 #os.system("clear")
 
 print("auto configuring home directory".center(width))
 a = os.path.expanduser('~')
 files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), f"   HOMEDIR: \"{a}\"\n")
 
-print(f"Added setting: HOMEDIR: {a} to config")
 #os.system("clear")
 
 shell_map = {
@@ -116,8 +113,8 @@ shell_map = {
     "2": "zsh",
     "3": "bash",
 }
-print("System Shell?".center(width))
-a=input()
+print("System Shell? 1) Xonsh, 2) Zsh, 3) Bash".center(width))
+a=getch()
 if a in shell_map:
     a = shell_map[a]
 else:
@@ -227,7 +224,7 @@ if a == "y":
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: true\n")
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: false\n")
-print("Enable whiching? (y/n)".center(width))
+print("Enable whiching? You definitly want this. (y/n)".center(width))
 a=getch()
 if a == "y":
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   whiching: true\n")
@@ -258,12 +255,9 @@ if a == "y":
             print("Invalid input, exiting...")
             exit(1)
         os.system(f"mv nknk {nkpath}")
-        print("moved nknk to your previously specified directory")
-        print("making venv")
         os.system('python3 -m venv ~/venv/')
-        print('renaming python executable(for fastfetch)')
         os.system(f"mv ~/venv/bin/python ~/venv/bin/nk-python")
-        print("Would you like to add nknk to ZSH path? (beta feature) (y/N)".center(width))
+        print("Would you like to add nknk to ZSH path? (y/n)".center(width))
         a=getch()
         if a == "y":
             path_added = True
@@ -275,10 +269,9 @@ if a == "y":
         else:
             print("nknk not added to path, add it manually")
             path_added = False
-        print("Installing requirements")
         os.system(f"~/venv/bin/pip install -r {nkpath}/requirements.txt")
-        print("making nk executable")
         os.system(f'chmod +x {nkpath}/nk')
+        os.system("clear")
         print("Installation complete")
 
         print("do you want to remove install, .git, readme, LICENSE, and requirements? (y/n)".center(width))
