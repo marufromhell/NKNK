@@ -9,8 +9,11 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 """
 
 # todo:
-# xonsh like python vs sh assumptions
-# allow shell curly braces
+# allow shell curly braces somehow
+# re add history
+# try to allow theme scripts like starship
+# DOC STRINGS
+
 
 # nk's not ksl
 import builtins
@@ -23,7 +26,6 @@ from completelib import *
 import subprocess
 import re
 
-# Add zoxide initialization
 def init_zoxide():
     try:
         subprocess.run(['zoxide', 'init', '--hook', 'pwd'], capture_output=True, text=True)
@@ -49,27 +51,36 @@ def load_config():
 config = load_config()
 
 # Set global variables from config
-SUPRESSLOGS = config["system"]["SUPPRESSLOGS"]
-HOMEDIR = config["system"]["HOMEDIR"]
-SystemShell = config["system"]["SystemShell"]
-nkdir = config["system"]["nkdir"]
-DefaultEditor = config["system"]["editor"]
-
-DefaultDir = nkdir
-Source = f"{DefaultDir}/nknk.py"
-
-ENABLE_CWD = config["prompt"]["cwd"]
-ENABLE_GIT = config["prompt"]["git"]
-ENABLE_TIMER = config["prompt"]["timer"]
-ENABLE_FQDN = config["prompt"]["fqdn"]
-ENABLE_USER = config["prompt"]["user"]
-ENABLE_2LINE = config["prompt"]["2line"]
-ENABLE_COLON = config["prompt"]["colon"]
-ENABLE_SHORTHOME = config["prompt"]["shorthome"] # /home/user to ~ on cwd
 
 
-ENABLE_ZOXIDE = config["other"]["zoxide"]
-ENABLE_WHICHING = config["other"]["whiching"] #you probably want this.
+try:
+    SUPRESSLOGS = config["system"]["SUPPRESSLOGS"]
+    HOMEDIR = config["system"]["HOMEDIR"]
+    SystemShell = config["system"]["SystemShell"]
+    nkdir = config["system"]["nkdir"]
+    DefaultEditor = config["system"]["editor"]
+
+    DefaultDir = nkdir
+    Source = f"{DefaultDir}/nknk.py"
+
+    ENABLE_CWD = config["prompt"]["cwd"]
+    ENABLE_GIT = config["prompt"]["git"]
+    ENABLE_TIMER = config["prompt"]["timer"]
+    ENABLE_FQDN = config["prompt"]["fqdn"]
+    ENABLE_USER = config["prompt"]["user"]
+    ENABLE_2LINE = config["prompt"]["2line"]
+    ENABLE_COLON = config["prompt"]["colon"]
+    ENABLE_SHORTHOME = config["prompt"]["shorthome"] # /home/user to ~ on cwd
+
+    ENABLE_ZOXIDE = config["other"]["zoxide"]
+    ENABLE_WHICHING = config["other"]["whiching"] # checks if a command exists if it isnt prefixed with a !, or a python command/var , and runs it if it does.
+except Exception as e:
+    print(f"NKNK: Error: Failed to load configuration: {e}\nuse the installer script.")
+    sys.exit(1)
+
+
+
+### prompt setup
 if ENABLE_2LINE:
     line = "\n"
 else:
@@ -78,7 +89,6 @@ if ENABLE_COLON:
     colon = ":"
 else:
     colon = ""
-# Generate prompt base if not specified in config
 if ENABLE_USER and ENABLE_FQDN:
     PROMPT_BASE = f"{os.getlogin()}@{socket.getfqdn()}"
 elif ENABLE_USER:
@@ -87,6 +97,10 @@ elif ENABLE_FQDN:
     PROMPT_BASE = socket.getfqdn()
 else:
     PROMPT_BASE = ""
+###
+
+
+
 def scmd(cmd):
     try:
         subprocess.run(cmd, shell=True, executable=SystemShell) # type: ignore
