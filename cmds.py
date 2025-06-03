@@ -3,6 +3,10 @@ import sys
 import shutil
 
 """
+Non os.system commands for nknk, not really for user use, but for nknk functions.
+"""
+
+"""
 cmdlib
 This module provides a command line functions for Python
 LGPLv3
@@ -16,6 +20,8 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 
 
 def cd(path):
+    """Change the current working directory to the specified path.
+    If the path contains spaces, it will be stripped of them."""
     os.chdir(path.replace(" ", ""))
 
 def mkdir(path):

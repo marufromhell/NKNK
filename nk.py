@@ -18,6 +18,7 @@ def importnknk():
         print("NK: Using nknk 2.1")
         nknk.NKlog() #type: ignore
 def run():
+    """Start the nknk shell."""
     nknk.cmdline() # type: ignore
 arguments = sys.argv[1:]
 if arguments:

@@ -13,6 +13,7 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 # re add history
 # try to allow theme scripts like starship
 # DOC STRINGS
+# windows support/ branch
 
 
 # nk's not ksl
@@ -27,14 +28,17 @@ import subprocess
 import re
 
 def init_zoxide():
+    """Hook zoxide into the shell. Takes no arguments."""
     try:
         subprocess.run(['zoxide', 'init', '--hook', 'pwd'], capture_output=True, text=True)
         return True
-    except FileNotFoundError:
+    except FileNotFoundError: #Why is this the exception
         print("NKNK: Warning: zoxide not found. Please install zoxide first.")
         return False
 
 def load_config():
+    """Uses yaml module to load the config file from ~/.config/nknk/nknk.yaml.
+    Returns a dictionary with the configuration."""
     config_path = os.path.expanduser("~/.config/nknk/nknk.yaml")
     try:
         with open(config_path, 'r') as f:
@@ -102,12 +106,15 @@ else:
 
 
 def scmd(cmd):
+    """Runs a shell command with the systemshell. Requires systemshell variable to be set."""
     try:
         subprocess.run(cmd, shell=True, executable=SystemShell) # type: ignore
     except Exception as e:
         print("Shell:", e)
 def get_git_branch():
-    """Get the current Git branch name."""
+    """Get the current Git branch name.
+
+    Returns the branch name as a string, or an empty string if not in a Git repository."""
     try:
         branch = subprocess.check_output(
             ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
@@ -118,6 +125,9 @@ def get_git_branch():
         return ""  # Not a Git repository
 
 def git_status():
+    """Get the Git status summary.
+    Returns a string summarizing the number of unstaged and untracked files."""
+    
     try:
         status = subprocess.check_output(
             ['git', 'status', '--porcelain'],stderr=subprocess.DEVNULL).decode().splitlines()
@@ -134,11 +144,13 @@ def git_status():
     return prompt 
 
 def NKlog():
+    """Prints current shell and directory, and recursion limit."""
     if not SUPRESSLOGS:
         print("NKNK: Log: Shell:", SystemShell)
         print("NKNK: Log: Dir:", DefaultDir)
         print("NKNK: Log: recursion limit: ",sys.getrecursionlimit())
 def sharks():
+    """Checks for command line arguments and runs the command if provided, otherwise calls NKlog and cmdline."""
     arguments = sys.argv[1:]
     if arguments:
         command = ' '.join(arguments)
@@ -148,6 +160,9 @@ def sharks():
         cmdline()
 
 def make_the_sharks_swim():
+    """A funny name for checking if the script is being ran directly or imported.
+    
+    If ran directly, it calls sharks(). If imported, it prints a log message( if not suppresslogs)."""
     if __name__=="__main__":
         sharks()
     elif not SUPRESSLOGS:
@@ -155,6 +170,7 @@ def make_the_sharks_swim():
 
 
 def incstack(number):
+    """Increases the recursion limit to the specified number."""
     sys.setrecursionlimit(number)
     print(sys.getrecursionlimit())
 
@@ -169,16 +185,20 @@ def pdv(): #print defined variables
 
 
 def nknkdef(code):
+    """Amends the nknk.py file with the provided string. Neither safe nor recommended for beginners.
+    Likely doesnt even work."""
     files.amend(Source, f"\n{code}")
     refresh()
 def command_case(command):
+    """ starts timer if enabled, runs the command, and prints the elapsed time if timer is enabled."""
+
     try:
 
         if ENABLE_TIMER:
             start_time = timeit.default_timer()
         # Only evaluate if contains format specifiers
-        if _f_string_pattern.search(command):
-            command = eval(f"f'{command}'", globals(), locals())
+        #if _f_string_pattern.search(command):
+        #    command = eval(f"f'{command}'", globals(), locals())  This is outdated, its better to just scmd(f"echo {python}) so that we dont mess with posix compliance
         scmd(command)
         if ENABLE_TIMER:
             elapsed_time = round(timeit.default_timer() - start_time, 2)
@@ -187,6 +207,16 @@ def command_case(command):
         return
 _f_string_pattern = re.compile(r'\{.*?\}')
 def cmdline():
+    """Checks the following conditions of user input:
+
+1. If the input starts with 'z ', it queries zoxide for the directory and changes to it.
+2. If the input starts with '!', it runs the command as a shell command.
+3. If the input is a directory, it changes to that directory.
+4. If the input has more than one word and does not contain parentheses, it runs the command as a shell command.
+5. If the input starts with '#', it runs the command as a sudo command.
+6. If the input is 'q', it exits the shell.
+If none of these conditions are met, it tries to run the input as a Python command or variable.
+If the input is invalid, it prints an error message."""
     elapsed_time = 0
     compile()
     # Pre-compile frequently used strings
@@ -195,10 +225,12 @@ def cmdline():
     zoxide_available = init_zoxide() if ENABLE_ZOXIDE else False
     
     
+    session = compile()  # Get the prompt session
+    
     while True:
         try:
+            # Create the prompt string
             if ENABLE_CWD:
-                    
                 if ENABLE_SHORTHOME:
                     current_working_directory = os.getcwd().replace(os.path.expanduser('~'), '~')
                 else:
@@ -206,14 +238,11 @@ def cmdline():
             else:
                 current_working_directory = ""
 
-
             prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}:"
-            user_input = input(prompt)
-            command0 = user_input
             
-
-
-
+            # Get input using prompt_toolkit
+            command0 = input(prompt)
+            
             if command0.startswith('z ') and ENABLE_ZOXIDE and zoxide_available:
                 query = command0[2:].strip()
                 try:
@@ -275,8 +304,20 @@ def cmdline():
 #args
 make_the_sharks_swim()
 
+#vi commands
+
+def vinknk():
+    """Opens the nknk.py file in the default editor."""
+    scmd(f"{DefaultEditor} {Source}")
+def vink():
+    """Opens the nk.py file in the default editor."""
+    scmd(f"{DefaultEditor} {nkdir}/nk.py")
+def viconf():
+    """Opens the nknk.yaml configuration file in the default editor."""
+    scmd(f"{DefaultEditor} ~/.config/nknk/nknk.yaml")
+
 #user added commands
-#start
+# Hyprland config files
 def viwb(x):
     if x== "j":
         scmd(f"sudo {DefaultEditor} /etc/xdg/waybar/config.jsonc")
@@ -288,9 +329,3 @@ def vihl():
     scmd(f"{DefaultEditor} ~/.config/hypr/hyprland.conf")
 def vihp():
     scmd(f"{DefaultEditor} ~/.config/hypr/hyprpaper.conf")
-def vinknk():
-    scmd(f"{DefaultEditor} {Source}")
-def vink():
-    scmd(f"{DefaultEditor} {nkdir}/nk.py")
-def viconf():
-    scmd(f"{DefaultEditor} ~/.config/nknk/nknk.yaml")

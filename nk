@@ -1,4 +1,5 @@
 #!/bin/bash
+# Note. NEVER RUN THIS AS ROOT. IT WONT WORK, AND IF YOUR PERSISTANT ENOUGH TO RUN IT, ROOT OWNED FILES WILL INVADE YOUR HOME DIRECTORY.
 if [ $# -eq 0 ]; then
     ~/venv/bin/nk-python ~/prog/nknk/nk.py
 else
