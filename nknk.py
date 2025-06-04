@@ -1,5 +1,6 @@
 """
-The NKNK Command line.
+The NKNK Command line. Passes all args to your shell as set in the config file
+""""""
 GPLv3
 email: maru@lithium-dev.xyz (pgp attached)
 signal: maru.222
@@ -55,8 +56,6 @@ def load_config():
 config = load_config()
 
 # Set global variables from config
-
-
 try:
     SUPRESSLOGS = config["system"]["SUPPRESSLOGS"]
     HOMEDIR = config["system"]["HOMEDIR"]
@@ -81,6 +80,7 @@ try:
 except Exception as e:
     print(f"NKNK: Error: Failed to load configuration: {e}\nuse the installer script.")
     sys.exit(1)
+###
 
 
 
@@ -181,8 +181,20 @@ def pdv(): #print defined variables
 
     for var in defined_variables:
         if var != '__builtins__' and var != 'copyright' and var != 'credits':
-            print(var, "=", globals()[var])
+            return(var, "=", globals()[var])
+def hand_globals_to_completer():
+    commands = []
+    script_variables = set(globals().keys())
+    default_variables = set(dir(builtins))
+    defined_variables = script_variables - default_variables
 
+    for var in defined_variables:
+        if var != '__builtins__' and var != 'copyright' and var != 'credits':
+            if callable(globals()[var]):  # Check if it's a function
+                commands.append(f"{var}(")
+            else:
+                commands.append(var)
+    return commands
 
 def nknkdef(code):
     """Amends the nknk.py file with the provided string. Neither safe nor recommended for beginners.
@@ -209,23 +221,23 @@ _f_string_pattern = re.compile(r'\{.*?\}')
 def cmdline():
     """Checks the following conditions of user input:
 
-1. If the input starts with 'z ', it queries zoxide for the directory and changes to it.
+1. If the input starts with 'z ', it queries zoxide for the directory and changes to it...........................................................................REQUIRES ENABLE_ZOXIDE to be True.
 2. If the input starts with '!', it runs the command as a shell command.
 3. If the input is a directory, it changes to that directory.
-4. If the input has more than one word and does not contain parentheses, it runs the command as a shell command.
-5. If the input starts with '#', it runs the command as a sudo command.
-6. If the input is 'q', it exits the shell.
+4. If the input has more than one word and does not contain parentheses, it runs the command as a shell command............REQUIRES ENABLE_WHICHING to be True.
+5. If the input is a valid command in the system's PATH, it runs the command as a shell command. For on-word commands.REQUIRES ENABLE_WHICHING to be True.
+6. If the input starts with '#', it runs the command as a sudo command.
+7. If the input is 'q', it exits the shell.
 If none of these conditions are met, it tries to run the input as a Python command or variable.
 If the input is invalid, it prints an error message."""
     elapsed_time = 0
-    compile()
     # Pre-compile frequently used strings
     home_replace = HOMEDIR
     sudo_prefix = 'sudo '
     zoxide_available = init_zoxide() if ENABLE_ZOXIDE else False
     
     
-    session = compile()  # Get the prompt session
+    compile(hand_globals_to_completer())
     
     while True:
         try:
@@ -240,10 +252,9 @@ If the input is invalid, it prints an error message."""
 
             prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}:"
             
-            # Get input using prompt_toolkit
             command0 = input(prompt)
             
-            if command0.startswith('z ') and ENABLE_ZOXIDE and zoxide_available:
+            if command0.startswith('z ' ) and ENABLE_ZOXIDE and zoxide_available: # zoxide query
                 query = command0[2:].strip()
                 try:
                     result = subprocess.run(['zoxide', 'query', query], capture_output=True,text=True)
@@ -253,27 +264,24 @@ If the input is invalid, it prints an error message."""
                         # add to zoxide db
                         scmd(f'zoxide add {target_dir}')
                     else:
-                        print(f"NKNK: Error: Directory not found: {query}")
+                        print(f"NKNK: Error: Zoxide: Directory not found: {query}")
                 except Exception as e:
                     print(f"NKNK: Error: Zoxide error: {e}")
                 continue
-
-
-
-            if command0.startswith('!'):
+            
+            elif command0.startswith('!'): #backwards compatibility
                 command = command0[1:]
-                command_case(command) # run the command
-                
+                command_case(command)
 
             elif os.path.isdir(command0): # if a executable and directory have the same name, cd, because its harder to manually cd than run a command
                 cd(command0)
-
-            elif len(command0.split()) > 1 and "(" not in command0: # if theres more than one word, assume its a shell command unless it has parenthesis
-                command_case(command0) # run the command
-            elif ENABLE_WHICHING and shutil.which(command0) is not None:
+            elif ENABLE_WHICHING and len(command0.split()) > 1 and not '(' in command0: #whiching multiple words
+                command_case(command0)
+            
+            elif ENABLE_WHICHING and shutil.which(command0) is not None: #whiching one word commands
                 command_case(command0)
                     
-            elif command0.startswith('#'):
+            elif command0.startswith('#'): #sudo command
                 scmd(sudo_prefix + command0[1:])
 
 
