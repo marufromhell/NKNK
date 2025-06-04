@@ -1,7 +1,6 @@
 import os
 import readline
 import re
-import files
 """
 Complib
 This module provides a very basic command line completion library for Python.
@@ -12,8 +11,7 @@ BTC: 16innLYQtz123HTwNLY3vScPmEVP7tob8u
 ETH: 0x48994D78B7090367Aa20FD5470baDceec42cAF62 
 XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDKqKNtbtJnU71gi6GrF4Wh
 """
-def compile():  # list is the command list if not use globals()
-    list = files.read('/home/maru/prog/nknk/cmdlist.txt').splitlines()
+def compile(list):  # list is the command list if not use globals()
     global commands
     commands = list
     comp = Completer()
@@ -21,13 +19,11 @@ def compile():  # list is the command list if not use globals()
     readline.parse_and_bind("tab: complete")
     readline.set_completer(comp.complete)
     return commands
-
 RE_SPACE = re.compile('.*\\s+$', re.M)
 
 class Completer(object):
 
     def _listdir(self, root):
-        "List directory 'root' appending the path separator to subdirs."
         res = []
         for name in os.listdir(root):
             path = os.path.join(root, name)
@@ -36,14 +32,33 @@ class Completer(object):
             res.append(name)
         return res
 
+    def _listdir_insensitive(self, root, partial=''):
+        res = []
+        try:
+            items = os.listdir(root)
+            partial = partial.lower()
+            for name in items:
+                if name.lower().startswith(partial):
+                    path = os.path.join(root, name)
+                    if os.path.isdir(path):
+                        name += os.sep
+                    res.append(name)
+        except OSError:
+            return []
+        return res
+
     def _complete_path(self, path=None):
         "Perform completion of filesystem path."
         if not path:
             return self._listdir('.')
+        
         dirname, rest = os.path.split(path)
         tmp = dirname if dirname else '.'
+        
+        # Use case-insensitive matching
         res = [os.path.join(dirname, p)
-                for p in self._listdir(tmp) if p.startswith(rest)]
+               for p in self._listdir_insensitive(tmp, rest)]
+        
         # more than one match, or single match which does not exist (typo)
         if len(res) > 1 or not os.path.exists(path):
             return res
@@ -54,7 +69,6 @@ class Completer(object):
         return [path + '']
 
     def complete_extra(self, args):
-        "Completions for the 'extra' command."
         if not args:
             # Complete from the current directory if no arguments are provided
             return self._complete_path('.')
@@ -62,7 +76,6 @@ class Completer(object):
         return self._complete_path(args[-1])
 
     def complete(self, text, state):
-        "Generic readline completion entry point."
         buffer = readline.get_line_buffer()
         line = buffer.split()
         
@@ -73,7 +86,7 @@ class Completer(object):
 
         # Handle space at the end of the buffer
         if RE_SPACE.match(buffer):
-            line.append('')
+            pass #python doesnt use spaces, well technically it does but thats weird
 
         # Resolve command to the implementation function
         cmd = line[0].strip()
@@ -84,14 +97,12 @@ class Completer(object):
                 matches = impl(args)
                 return matches[state] if state < len(matches) else None
 
-        # Fallback: Match commands starting with the input
         if len(line) == 1:  # Only complete directory names if no additional input exists
             matches = [c for c in commands if c.startswith(cmd)]
             if not matches:
                 # If no command matches, treat as a path and complete it
                 matches = self._complete_path(text)
         else:
-            # If additional input exists, only complete based on the last word
             partial_path = line[-1]
             matches = self._complete_path(partial_path)
             # Prepend the rest of the input to the match
