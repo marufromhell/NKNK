@@ -5,9 +5,6 @@ Whys it a terminal and not a shell? Because nknk is dependant on another shell, 
 
 But isn't python slow? Not really in this case. NKNK isnt slow at all, sometimes it feels more responsive than zsh or bash when configured with themes.
 
-Future plans:  
-zoxide support.  
-
 # install
 `curl -o install.py https://raw.githubusercontent.com/marufromhell/NKNK/main/install.py && python3 install.py`  
   
