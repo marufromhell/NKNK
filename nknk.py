@@ -10,11 +10,14 @@ XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDK
 """
 
 # todo:
-# allow shell curly braces somehow
+# either implement my own shell completion or steal xompletions, no disrespect to xonsh but that shit is bloated. takes longer than bash to realize a command dont exist.
+# but its better out of the box than bash and i get to steal their code when im confused :)
 # re add history
-# try to allow theme scripts like starship
-# DOC STRINGS
 # windows support/ branch
+
+#i legit made a hypr keybind to open kitty with nk
+# bind = $mainMod, N, exec, $terminal nk
+# the zoxide hook was completely un necisarry, but it worked as a zoxide check ig?
 
 
 # nk's not ksl
@@ -27,15 +30,6 @@ from cmds import *
 from completelib import *
 import subprocess
 import re
-
-def init_zoxide():
-    """Hook zoxide into the shell. Takes no arguments."""
-    try:
-        subprocess.run(['zoxide', 'init', '--hook', 'pwd'], capture_output=True, text=True)
-        return True
-    except FileNotFoundError: #Why is this the exception
-        print("NKNK: Warning: zoxide not found. Please install zoxide first.")
-        return False
 
 def load_config():
     """Uses yaml module to load the config file from ~/.config/nknk/nknk.yaml.
@@ -77,6 +71,7 @@ try:
 
     ENABLE_ZOXIDE = config["other"]["zoxide"]
     ENABLE_WHICHING = config["other"]["whiching"] # checks if a command exists if it isnt prefixed with a !, or a python command/var , and runs it if it does.
+    ENABLE_SHCOMPS = config["other"]["fullshellcomps"]
 except Exception as e:
     print(f"NKNK: Error: Failed to load configuration: {e}\nuse the installer script.")
     sys.exit(1)
@@ -97,6 +92,8 @@ if ENABLE_USER and ENABLE_FQDN:
     PROMPT_BASE = f"{os.getlogin()}@{socket.getfqdn()}"
 elif ENABLE_USER:
     PROMPT_BASE = os.getlogin()
+    zoxide_available = ENABLE_ZOXIDE 
+
 elif ENABLE_FQDN:
     PROMPT_BASE = socket.getfqdn()
 else:
@@ -108,7 +105,11 @@ else:
 def scmd(cmd):
     """Runs a shell command with the systemshell. Requires systemshell variable to be set."""
     try:
-        subprocess.run(cmd, shell=True, executable=SystemShell) # type: ignore
+        subprocess.run(cmd, 
+                      shell=True, 
+                      executable=SystemShell,
+                      text=True,
+                      bufsize=1)
     except Exception as e:
         print("Shell:", e)
 def get_git_branch():
@@ -194,6 +195,9 @@ def hand_globals_to_completer():
                 commands.append(f"{var}(")
             else:
                 commands.append(var)
+    if ENABLE_SHCOMPS:
+        shcomps = get_shell_commands()
+        commands = commands + shcomps
     return commands
 
 def nknkdef(code):
@@ -201,41 +205,54 @@ def nknkdef(code):
     Likely doesnt even work."""
     files.amend(Source, f"\n{code}")
     refresh()
+start_time=0 #reset so interpreter dont yell at me
+def starttime():
+    """Starts the timer if ENABLE_TIMER is True."""
+    global start_time
+    if ENABLE_TIMER:
+        start_time = timeit.default_timer()
+    else:
+        start_time = None
+elapsed_time=0 #same thing
+def endtime():
+    """Ends the timer and calculates elapsed time if ENABLE_TIMER is True."""
+    global elapsed_time
+    if ENABLE_TIMER and start_time is not None:
+        elapsed_time = round(timeit.default_timer() - start_time, 2)
+    else:
+        elapsed_time = 0
+
 def command_case(command):
     """ starts timer if enabled, runs the command, and prints the elapsed time if timer is enabled."""
 
     try:
-
-        if ENABLE_TIMER:
-            start_time = timeit.default_timer()
         # Only evaluate if contains format specifiers
         #if _f_string_pattern.search(command):
         #    command = eval(f"f'{command}'", globals(), locals())  This is outdated, its better to just scmd(f"echo {python}) so that we dont mess with posix compliance
         scmd(command)
-        if ENABLE_TIMER:
-            elapsed_time = round(timeit.default_timer() - start_time, 2)
+        endtime()
     except Exception as e:
         print("\aNKNK: Error: Invalid command:", e)
         return
 _f_string_pattern = re.compile(r'\{.*?\}')
+
 def cmdline():
     """Checks the following conditions of user input:
 
-1. If the input starts with 'z ', it queries zoxide for the directory and changes to it...........................................................................REQUIRES ENABLE_ZOXIDE to be True.
+1. If the input starts with 'z ', it queries zoxide for the directory and changes to it. REQUIRES ENABLE_ZOXIDE to be True.
 2. If the input starts with '!', it runs the command as a shell command.
 3. If the input is a directory, it changes to that directory.
-4. If the input has more than one word and does not contain parentheses, it runs the command as a shell command............REQUIRES ENABLE_WHICHING to be True.
+4. If the input has more than one word and does not contain parentheses, it runs the command as a shell command. REQUIRES ENABLE_WHICHING to be True.
 5. If the input is a valid command in the system's PATH, it runs the command as a shell command. For on-word commands.REQUIRES ENABLE_WHICHING to be True.
 6. If the input starts with '#', it runs the command as a sudo command.
 7. If the input is 'q', it exits the shell.
 If none of these conditions are met, it tries to run the input as a Python command or variable.
 If the input is invalid, it prints an error message."""
-    elapsed_time = 0
     # Pre-compile frequently used strings
     home_replace = HOMEDIR
     sudo_prefix = 'sudo '
-    zoxide_available = init_zoxide() if ENABLE_ZOXIDE else False
-    
+    zoxide_available = ENABLE_ZOXIDE 
+
     
     compile(hand_globals_to_completer())
     
@@ -253,7 +270,7 @@ If the input is invalid, it prints an error message."""
             prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}:"
             
             command0 = input(prompt)
-            
+            starttime()
             if command0.startswith('z ' ) and ENABLE_ZOXIDE and zoxide_available: # zoxide query
                 query = command0[2:].strip()
                 try:
@@ -263,26 +280,30 @@ If the input is invalid, it prints an error message."""
                         cd(target_dir)
                         # add to zoxide db
                         scmd(f'zoxide add {target_dir}')
+                        endtime()
                     else:
                         print(f"NKNK: Error: Zoxide: Directory not found: {query}")
                 except Exception as e:
                     print(f"NKNK: Error: Zoxide error: {e}")
+                    endtime()
                 continue
             
             elif command0.startswith('!'): #backwards compatibility
                 command = command0[1:]
                 command_case(command)
+                endtime()
 
             elif os.path.isdir(command0): # if a executable and directory have the same name, cd, because its harder to manually cd than run a command
                 cd(command0)
-            elif ENABLE_WHICHING and len(command0.split()) > 1 and not '(' in command0: #whiching multiple words
+                endtime()
+            elif ENABLE_WHICHING and shutil.which(command0.split()[0]) is not None and command0.split()[0] != "import": # if you use cmds like ls() but put a space in between parentheses and the command, it will run the command as a shell command.
                 command_case(command0)
-            
-            elif ENABLE_WHICHING and shutil.which(command0) is not None: #whiching one word commands
-                command_case(command0)
+                endtime()
                     
             elif command0.startswith('#'): #sudo command
                 scmd(sudo_prefix + command0[1:])
+                endtime()
+
 
 
             elif command0 == "q":
@@ -290,23 +311,26 @@ If the input is invalid, it prints an error message."""
             
             else:
                 try:
-                    if ENABLE_TIMER:
-                        start_time = timeit.default_timer()
+                    
                     globals().update(globals())
                     exec(command0, globals())
-                    if ENABLE_TIMER:
-                        elapsed_time = round(timeit.default_timer() - start_time, 2)
+                    endtime()
                 except Exception as e:
                     print("NKNK: Error: Exception:", e)
+                    endtime()
                 except KeyboardInterrupt:
                         print("\nNKNK: Log: KeyboardInterrupt")
+                        endtime()
         except EOFError:
             print("\nNKNK: Log: EOFError, exiting...")
+            endtime()
             break
         except Exception as e:
             print("\nNKNK: Log: Exception:", e)
+            endtime()
         except KeyboardInterrupt:
                 print("\nNKNK: Log: KeyboardInterrupt")
+                endtime()
         
 
 #args

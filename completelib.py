@@ -1,6 +1,8 @@
 import os
 import readline
 import re
+import subprocess
+import complibxonshbash
 """
 Complib
 This module provides a very basic command line completion library for Python.
@@ -11,10 +13,55 @@ BTC: 16innLYQtz123HTwNLY3vScPmEVP7tob8u
 ETH: 0x48994D78B7090367Aa20FD5470baDceec42cAF62 
 XMR: 49dNpgP5QSpPDF1YUVuU3ST2tUWng32m8crGQ4NuM6U44CG1ennTvESWbwK6epkfJ6LuAKYjSDKqKNtbtJnU71gi6GrF4Wh
 """
-def compile(list):  # list is the command list if not use globals()
+
+
+#trie structure is actually insanely good
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_end = False
+        
+class CommandTrie:
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def insert(self, word):
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+        node.is_end = True
+    
+    def find_prefix(self, prefix):
+        node = self.root
+        for char in prefix:
+            if char not in node.children:
+                return []
+            node = node.children[char]
+        return self._get_all_words(node, prefix)
+    
+    def _get_all_words(self, node, prefix):
+        words = []
+        if node.is_end:
+            words.append(prefix)
+        for char, child in node.children.items():
+            words.extend(self._get_all_words(child, prefix + char))
+        return words
+
+def get_shell_commands():
+    try:
+        result = subprocess.run(['bash', '-c', 'compgen -c'], stdout=subprocess.PIPE, text=True)
+        commands = result.stdout.splitlines()
+        return commands
+    except Exception as e:
+        print(f"Error fetching shell commands: {e}")
+        return []
+def compile(command_list):
     global commands
-    commands = list
+    commands = command_list
     comp = Completer()
+    comp.initialize_commands(command_list)
     readline.set_completer_delims('\t\n;')
     readline.parse_and_bind("tab: complete")
     readline.set_completer(comp.complete)
@@ -22,7 +69,12 @@ def compile(list):  # list is the command list if not use globals()
 RE_SPACE = re.compile('.*\\s+$', re.M)
 
 class Completer(object):
-
+    def __init__(self):
+        self.command_trie = CommandTrie()
+        
+    def initialize_commands(self, commands):
+        for cmd in commands:
+            self.command_trie.insert(cmd)
     def _listdir(self, root):
         res = []
         for name in os.listdir(root):
@@ -81,31 +133,17 @@ class Completer(object):
         
         # Show all commands if no input
         if not line:
-            matches = [c for c in commands]
+            matches = commands
             return matches[state] if state < len(matches) else None
 
-        # Handle space at the end of the buffer
-        if RE_SPACE.match(buffer):
-            pass #python doesnt use spaces, well technically it does but thats weird
-
-        # Resolve command to the implementation function
         cmd = line[0].strip()
-        if cmd in commands:
-            impl = getattr(self, f'complete_{cmd}', None)
-            if impl:
-                args = line[1:]  # Pass remaining arguments to the command-specific completer
-                matches = impl(args)
-                return matches[state] if state < len(matches) else None
-
-        if len(line) == 1:  # Only complete directory names if no additional input exists
-            matches = [c for c in commands if c.startswith(cmd)]
+        if len(line) == 1:
+            matches = self.command_trie.find_prefix(cmd)
             if not matches:
-                # If no command matches, treat as a path and complete it
                 matches = self._complete_path(text)
         else:
             partial_path = line[-1]
             matches = self._complete_path(partial_path)
-            # Prepend the rest of the input to the match
             matches = [buffer[:buffer.rfind(partial_path)] + match for match in matches]
 
         return matches[state] if state < len(matches) else None
