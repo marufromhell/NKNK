@@ -285,9 +285,13 @@ if a == "y":
             if os.system("git clone https://github.com/marufromhell/NKNK.git -b main nknk") != 0:
                 print("Error: Git clone failed")
                 exit(1)
+            print('done')
         else:
             print("Invalid input, exiting...")
             exit(1)
+        print('moving')
+        #ensure prog exists or it fucking hates you
+        os.system('mkdir ~/prog')
         os.system(f"cp -r ./nknk {nkpath}") # if path exist or not empty it is a btich with mv
         os.system('python3 -m venv ~/venv/')
         os.system(f"mv ~/venv/bin/python ~/venv/bin/nk-python")
