@@ -2,7 +2,10 @@ print("welcome to nknk installer")
 import os
 import shutil
 print("making config")
-
+print('checking installs')
+if os.path.exists('./nknk'):
+    print('recovering failed attempt')
+    os.system('rm -rf ./nknk')
 def ensure_config_dir():
     config_dir = os.path.expanduser("~/.config/nknk")
     if not os.path.exists(config_dir):
@@ -285,7 +288,7 @@ if a == "y":
         else:
             print("Invalid input, exiting...")
             exit(1)
-        os.system(f"mv nknk {nkpath}")
+        os.system(f"cp ./nknk {nkpath}")
         os.system('python3 -m venv ~/venv/')
         os.system(f"mv ~/venv/bin/python ~/venv/bin/nk-python")
         print("Would you like to add nknk to ZSH path? (y/n)".center(width))
@@ -321,6 +324,7 @@ if a == "y":
         #ensure that install.py is in the current directory
         if os.path.exists("install.py"):
             os.system("rm install.py")
+        os.system('rm -rf ./nknk')
         os.system("clear")
         print("Do you want to start nk? (y/n)".center(width))
         a=getch()
