@@ -288,7 +288,7 @@ if a == "y":
         else:
             print("Invalid input, exiting...")
             exit(1)
-        os.system(f"cp -r ./nknk {nkpath}")
+        os.system(f"cp -r ./nknk {nkpath}") # if path exist or not empty it is a btich with mv
         os.system('python3 -m venv ~/venv/')
         os.system(f"mv ~/venv/bin/python ~/venv/bin/nk-python")
         print("Would you like to add nknk to ZSH path? (y/n)".center(width))
