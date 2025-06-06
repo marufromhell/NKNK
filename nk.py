@@ -20,6 +20,7 @@ def importnknk():
 def run():
     """Start the nknk shell."""
     nknk.cmdline() # type: ignore
+    
 arguments = sys.argv[1:]
 if arguments:
     command = ' '.join(arguments)

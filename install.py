@@ -1,5 +1,6 @@
 print("welcome to nknk installer")
 import os
+import shutil
 print("making config")
 
 def ensure_config_dir():
@@ -7,17 +8,32 @@ def ensure_config_dir():
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
 def check_git_installed():
-    if os.system("which git > /dev/null") != 0:
-        print("Error: git is not installed. Please install git first.")
-        exit(1)
+    if shutil.which("git") == None:
+        print("git not installed, exiting")
+        exit()
+def check_zoxide():
+    if shutil.which("zoxide") == None:
+        print("zoxide not installed, this will cause errors")
 # credit to https://code.activestate.com/recipes/134892-getch-like-unbuffered-character-reading-from-stdin/
 # i removed the windows part because i dont intend to support windows
+class _Getch:
+    """Gets a single character from standard input.  Does not echo to the
+screen."""
+    def __init__(self):
+        try:
+            self.impl = _GetchWindows()
+        except ImportError:
+            self.impl = _GetchUnix()
+
+    def __call__(self): return self.impl()
+
+
 class _GetchUnix:
     def __init__(self):
         import tty, sys
 
     def __call__(self):
-        import sys, tty, termios #these are likely preinstalled on most linux systems but im not sure.
+        import sys, tty, termios
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
@@ -27,7 +43,17 @@ class _GetchUnix:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
 
-getch = _GetchUnix()
+
+class _GetchWindows:
+    def __init__(self):
+        import msvcrt
+
+    def __call__(self):
+        import msvcrt
+        return msvcrt.getch() #type: ignore
+
+
+getch = _Getch()
 width = os.get_terminal_size().columns
 #os.system("clear")
 
@@ -38,7 +64,6 @@ class files:
         try:
             fw = open(fnw, "w", encoding="utf-8")
             fw.write(data)
-            print(fw)
             fw.close()
         except Exception as e:
             print(f"Error: {e}")
@@ -52,7 +77,6 @@ class files:
                 write.write(existing_data + data)
         except Exception as e:
             print(f"Error: {e}")
-        print(f"Data appended to {fnw}")
     @staticmethod
     def touch(fnw):
         files.write(fnw, "")
@@ -222,6 +246,7 @@ print("Enable zoxide? (y/n)".center(width))
 a=getch()
 if a == "y":
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: true\n")
+    check_zoxide()
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   zoxide: false\n")
 print("Enable whiching? You definitly want this. (y/n)".center(width))
@@ -231,6 +256,12 @@ if a == "y":
 else:
     files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   whiching: false\n")
 os.system("clear")
+print("Enable full shell completions, will increase startup time by a few ms (y/n)".center(width))
+a=getch()
+if a == "y":
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   fullshellcomps: true")
+if a == "n":
+    files.amend(os.path.expanduser("~/.config/nknk/nknk.yaml"), "   fullshellcomps: false")
 print("All done with nknk configuration")
 print("Do you want to install nknk now? (y/n)".center(width))
 a=getch()
@@ -290,6 +321,7 @@ if a == "y":
         #ensure that install.py is in the current directory
         if os.path.exists("install.py"):
             os.system("rm install.py")
+        os.system("clear")
         print("Do you want to start nk? (y/n)".center(width))
         a=getch()
         if a == "y":

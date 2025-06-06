@@ -2,7 +2,6 @@ import os
 import readline
 import re
 import subprocess
-import complibxonshbash
 """
 Complib
 This module provides a very basic command line completion library for Python.

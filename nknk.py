@@ -200,11 +200,6 @@ def hand_globals_to_completer():
         commands = commands + shcomps
     return commands
 
-def nknkdef(code):
-    """Amends the nknk.py file with the provided string. Neither safe nor recommended for beginners.
-    Likely doesnt even work."""
-    files.amend(Source, f"\n{code}")
-    refresh()
 start_time=0 #reset so interpreter dont yell at me
 def starttime():
     """Starts the timer if ENABLE_TIMER is True."""

@@ -3,5 +3,5 @@
 if [ $# -eq 0 ]; then
     ~/venv/bin/nk-python ~/prog/nknk/nk.py
 else
-    ~/venv/bin/nk-python ~/prog/nknk/nk.py "#@"
+    ~/venv/bin/nk-python ~/prog/nknk/nk.py "$@"
 fi

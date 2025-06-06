@@ -63,7 +63,3 @@ def pyrun(file):
     
 def ls():
     print(os.listdir('.'))
-def refresh():
-    r = "refreshing"
-    print(r)
-    os.execv(sys.argv[0], sys.argv)
