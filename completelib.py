@@ -99,7 +99,7 @@ class Completer(object):
         return res
 
     def _complete_path(self, path=None):
-        "Perform completion of filesystem path."
+        """Perform completion of filesystem path."""
         if not path:
             return self._listdir('.')
         
