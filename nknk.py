@@ -76,9 +76,6 @@ except Exception as e:
     print(f"NKNK: Error: Failed to load configuration: {e}\nuse the installer script.")
     sys.exit(1)
 ###
-
-
-
 ### prompt setup
 if ENABLE_2LINE:
     line = "\n"
@@ -99,6 +96,11 @@ elif ENABLE_FQDN:
 else:
     PROMPT_BASE = ""
 ###
+
+try:
+    promptchar=config["prompt"]["promptchar"]
+except Exception:
+    promptchar=':'
 
 
 
@@ -253,7 +255,6 @@ If the input is invalid, it prints an error message."""
     
     while True:
         try:
-            # Create the prompt string
             if ENABLE_CWD:
                 if ENABLE_SHORTHOME:
                     current_working_directory = os.getcwd().replace(os.path.expanduser('~'), '~')
@@ -262,8 +263,8 @@ If the input is invalid, it prints an error message."""
             else:
                 current_working_directory = ""
 
-            prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}:"
-            
+            prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}{promptchar}".strip()
+
             command0 = input(prompt)
             starttime()
             if command0.startswith('z ' ) and ENABLE_ZOXIDE and zoxide_available: # zoxide query
@@ -277,11 +278,12 @@ If the input is invalid, it prints an error message."""
                         scmd(f'zoxide add {target_dir}')
                         endtime()
                     else:
-                        print(f"NKNK: Error: Zoxide: Directory not found: {query}")
+                        print(f"NKNK: Error: Zoxide: Directory not found: {query}, trying to query again... ")
+                        scmd(f'z {query}')
                 except Exception as e:
                     print(f"NKNK: Error: Zoxide error: {e}")
                     endtime()
-                continue
+                continue 
             
             elif command0.startswith('!'): #backwards compatibility
                 command = command0[1:]
