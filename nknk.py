@@ -231,8 +231,6 @@ def command_case(command):
     except Exception as e:
         print("\aNKNK: Error: Invalid command:", e)
         return
-_f_string_pattern = re.compile(r'\{.*?\}')
-
 def cmdline():
     """Checks the following conditions of user input:
 
@@ -263,9 +261,7 @@ If the input is invalid, it prints an error message."""
             else:
                 current_working_directory = ""
 
-            prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}{promptchar}"
-            if " "not in promptchar:
-                prompt=prompt.replace(" ", "")
+            prompt = f"{PROMPT_BASE}{colon}{current_working_directory}{elapsed_time if ENABLE_TIMER else ''}{line}{get_git_branch() if ENABLE_GIT else ''}{git_status() if ENABLE_GIT else ''}{promptchar}"
             command0 = input(prompt)
             starttime()
             if command0.startswith('z ' ) and ENABLE_ZOXIDE and zoxide_available: # zoxide query
