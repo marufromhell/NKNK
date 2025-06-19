@@ -263,8 +263,9 @@ If the input is invalid, it prints an error message."""
             else:
                 current_working_directory = ""
 
-            prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}{promptchar}".strip()
-
+            prompt = f"{PROMPT_BASE}{colon}{current_working_directory} {elapsed_time if ENABLE_TIMER else ''} {line}{get_git_branch() if ENABLE_GIT else ''} {git_status() if ENABLE_GIT else ''}{promptchar}"
+            if " "not in promptchar:
+                prompt=prompt.replace(" ", "")
             command0 = input(prompt)
             starttime()
             if command0.startswith('z ' ) and ENABLE_ZOXIDE and zoxide_available: # zoxide query
@@ -293,7 +294,7 @@ If the input is invalid, it prints an error message."""
             elif os.path.isdir(command0): # if a executable and directory have the same name, cd, because its harder to manually cd than run a command
                 cd(command0)
                 endtime()
-            elif ENABLE_WHICHING and shutil.which(command0.split()[0]) is not None and command0.split()[0] != "import": # if you use cmds like ls() but put a space in between parentheses and the command, it will run the command as a shell command.
+            elif ENABLE_WHICHING and shutil.which(command0.split()[0]) is not None and command0.split()[0] != "import": # if you use cmds like ls() but put a space in between parentheses and the command, it will run the command as a shell command. (the import thing is to make sure you can use python imports rather than import the x screenshot thing(its shit anyways so idrc about making a real solution)
                 command_case(command0)
                 endtime()
                     
